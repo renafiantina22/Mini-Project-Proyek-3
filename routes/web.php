@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ReviewController;
 
 Route::redirect('/', '/login');
 
@@ -58,6 +59,26 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/reports/{report}', [ReportController::class, 'show'])
             ->name('reports.show');
+
+    });
+
+    // Route khusus Relawan
+    Route::middleware('role:relawan')->group(function () {
+
+        Route::get('/reviews', [ReviewController::class, 'index'])
+            ->name('reviews.index');
+
+        Route::get('/reviews/{report}', [ReviewController::class, 'show'])
+            ->name('reviews.show');
+        
+        Route::post('/reviews/{report}/start',[ReviewController::class, 'startReview'])
+            ->name('reviews.start');
+
+        Route::post('/reviews/{report}/note',[ReviewController::class, 'store'])
+            ->name('reviews.store');
+
+        Route::post('/reviews/{report}/decision',[ReviewController::class, 'decide'])
+            ->name('reviews.decide');
 
     });
 
