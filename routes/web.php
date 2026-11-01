@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\FollowupController;
 
 Route::redirect('/', '/login');
 
@@ -48,8 +49,27 @@ Route::middleware('auth')->group(function () {
 
         Route::resource('reports', ReportController::class)
             ->only(['create', 'store', 'edit', 'update']);
+    
 
     });
+
+     // Route khusus Koordinator
+    Route::middleware('role:koordinator')->group(function () {
+
+        Route::get('/follow-ups', [FollowUpController::class, 'index'])
+            ->name('follow-ups.index');
+
+        Route::get('/follow-ups/{report}', [FollowUpController::class, 'show'])
+            ->name('follow-ups.show');
+        
+        Route::post('/follow-ups/{report}/forward', [FollowUpController::class, 'forward'])
+            ->name('follow-ups.forward');
+
+        Route::post('/follow-ups/{report}/complete', [FollowUpController::class, 'complete'])
+            ->name('follow-ups.complete');
+
+    });
+
 
     // Route daftar dan detail laporan untuk semua role
     Route::middleware('role:pelapor,relawan,koordinator')->group(function () {
