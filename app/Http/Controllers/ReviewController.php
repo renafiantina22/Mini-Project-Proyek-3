@@ -20,7 +20,13 @@ class ReviewController extends Controller
     // Menampilkan detail laporan untuk ditinjau
     public function show(Report $report)
     {
-        $report->load(['user', 'area', 'reviews.reviewer']);
+        $report->load([
+            'user',
+            'area',
+            'reviews.reviewer',
+            'followUps.coordinator',
+            'logs.user'
+        ]);
 
         return view('reviews.show', compact('report'));
     }

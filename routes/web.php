@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\FollowupController;
+use App\Http\Controllers\RecapController;
 
 Route::redirect('/', '/login');
 
@@ -22,40 +23,56 @@ Route::middleware('guest')->group(function () {
 // Route untuk pengguna yang sudah login
 Route::middleware('auth')->group(function () {
 
+    // Dashboard
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
 
+    // Logout
     Route::post('/logout', [LoginController::class, 'logout'])
         ->name('logout');
 
-    // Route khusus Pelapor
+    // Route akses berdasarkan role
     Route::get('/akses/pelapor', function () {
         return 'Akses Pelapor berhasil!';
     })->middleware('role:pelapor');
 
-    // Route khusus Relawan
     Route::get('/akses/relawan', function () {
         return 'Akses Relawan berhasil!';
     })->middleware('role:relawan');
 
-    // Route khusus Koordinator
     Route::get('/akses/koordinator', function () {
         return 'Akses Koordinator berhasil!';
     })->middleware('role:koordinator');
 
-    // Route khusus Pelapor
+
+    // ROUTE KHUSUS PELAPOR
     Route::middleware('role:pelapor')->group(function () {
 
         Route::resource('reports', ReportController::class)
             ->only(['create', 'store', 'edit', 'update']);
-    
+
+        Route::get('/areas/{area}/information', [ReportController::class, 'areaInformation'])
+            ->name('areas.information');
+
     });
 
+
+    // ROUTE REKAP RELAWAN DAN KOORDINATOR
+    Route::middleware('role:relawan,koordinator')->group(function () {
+
+        Route::get('/recaps', [RecapController::class, 'index'])
+            ->name('recaps.index');
+
+    });
+
+
+    // ROUTE DATA LAPORAN (FETCH)
     Route::get('/reports/data', [ReportController::class, 'data'])
         ->name('reports.data');
 
-     // Route khusus Koordinator
+
+    // ROUTE KHUSUS KOORDINATOR
     Route::middleware('role:koordinator')->group(function () {
 
         Route::get('/follow-ups', [FollowUpController::class, 'index'])
@@ -63,18 +80,17 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/follow-ups/{report}', [FollowUpController::class, 'show'])
             ->name('follow-ups.show');
-        
+
         Route::post('/follow-ups/{report}/forward', [FollowUpController::class, 'forward'])
             ->name('follow-ups.forward');
 
         Route::post('/follow-ups/{report}/complete', [FollowUpController::class, 'complete'])
             ->name('follow-ups.complete');
 
-
     });
 
 
-    // Route daftar dan detail laporan untuk semua role
+    // ROUTE DAFTAR DAN DETAIL LAPORAN UNTUK SEMUA ROLE
     Route::middleware('role:pelapor,relawan,koordinator')->group(function () {
 
         Route::get('/reports', [ReportController::class, 'index'])
@@ -85,7 +101,8 @@ Route::middleware('auth')->group(function () {
 
     });
 
-    // Route khusus Relawan
+
+    // ROUTE KHUSUS RELAWAN
     Route::middleware('role:relawan')->group(function () {
 
         Route::get('/reviews', [ReviewController::class, 'index'])
@@ -93,16 +110,16 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/reviews/{report}', [ReviewController::class, 'show'])
             ->name('reviews.show');
-        
-        Route::post('/reviews/{report}/start',[ReviewController::class, 'startReview'])
+
+        Route::post('/reviews/{report}/start', [ReviewController::class, 'startReview'])
             ->name('reviews.start');
 
-        Route::post('/reviews/{report}/note',[ReviewController::class, 'store'])
+        Route::post('/reviews/{report}/note', [ReviewController::class, 'store'])
             ->name('reviews.store');
 
-        Route::post('/reviews/{report}/decision',[ReviewController::class, 'decide'])
+        Route::post('/reviews/{report}/decision', [ReviewController::class, 'decide'])
             ->name('reviews.decide');
 
     });
 
-}); 
+});

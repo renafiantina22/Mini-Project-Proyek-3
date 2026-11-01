@@ -23,37 +23,55 @@
                 </div>
             </div>
 
+
             <div class="sidebar-menu">
                 <p class="menu-label">MENU UTAMA</p>
 
                 <a href="{{ route('dashboard') }}"
-                   class="menu-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                class="menu-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     Dashboard
                 </a>
 
                 @if (auth()->user()->role === 'pelapor')
-
                     <a href="{{ route('reports.index') }}"
-                       class="menu-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                    class="menu-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
                         Laporan Saya
                     </a>
 
                 @elseif (auth()->user()->role === 'relawan')
-
                     <a href="{{ route('reviews.index') }}"
-                       class="menu-item {{ request()->routeIs('reviews.*') ? 'active' : '' }}">
+                    class="menu-item {{ request()->routeIs('reviews.*') ? 'active' : '' }}">
                         Peninjauan Laporan
                     </a>
 
-                @elseif (auth()->user()->role === 'koordinator')
+                    <a href="{{ route('reports.index') }}"
+                    class="menu-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                        Laporan
+                    </a>
 
+                    <a href="{{ route('recaps.index') }}"
+                    class="menu-item {{ request()->routeIs('recaps.*') ? 'active' : '' }}">
+                        Rekap Laporan
+                    </a>
+
+                @elseif (auth()->user()->role === 'koordinator')
                     <a href="{{ route('follow-ups.index') }}"
-                       class="menu-item {{ request()->routeIs('follow-ups.*') ? 'active' : '' }}">
+                    class="menu-item {{ request()->routeIs('follow-ups.*') ? 'active' : '' }}">
                         Tindak Lanjut
                     </a>
 
+                    <a href="{{ route('reports.index') }}"
+                    class="menu-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                        Laporan
+                    </a>
+
+                    <a href="{{ route('recaps.index') }}"
+                    class="menu-item {{ request()->routeIs('recaps.*') ? 'active' : '' }}">
+                        Rekap Laporan
+                    </a>
                 @endif
             </div>
+
 
             <div class="sidebar-footer">
                 <div class="user-info">
@@ -88,6 +106,6 @@
         </main>
 
     </div>
-
+@stack('scripts')
 </body>
 </html>

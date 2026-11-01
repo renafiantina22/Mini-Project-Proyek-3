@@ -104,6 +104,8 @@
             @endforelse
         </div>
     </div>
+    
+    @include('reports._status-history')
 
     {{-- FORM PENYELESAIAN --}}
     @if ($report->status === 'sedang_ditindaklanjuti')
@@ -155,5 +157,4 @@
             </form>
         </div>
     @endif
-
 @endsection

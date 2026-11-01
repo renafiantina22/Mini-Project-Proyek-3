@@ -37,7 +37,8 @@ class FollowUpController extends Controller
             'user',
             'area',
             'reviews.reviewer',
-            'followUps.coordinator'
+            'followUps.coordinator',
+            'logs.user'
         ]);
 
         return view('follow-ups.show', compact('report'));

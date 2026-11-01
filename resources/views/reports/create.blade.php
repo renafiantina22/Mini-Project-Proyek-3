@@ -72,6 +72,7 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label for="area_id">Wilayah Kejadian</label>
+
                     <select id="area_id" name="area_id" required>
                         <option value="">Pilih Wilayah</option>
 
@@ -96,6 +97,40 @@
                     >
                 </div>
             </div>
+
+            {{-- INFORMASI WILAYAH DARI FETCH --}}
+            <div id="area-information"
+                 class="card"
+                 style="display: none; margin-bottom: 20px;">
+
+                <h3>Informasi Wilayah Terpilih</h3>
+
+                <p>
+                    <strong>Wilayah:</strong>
+                    <span id="area-name">-</span>
+                </p>
+
+                <p>
+                    <strong>Jumlah Laporan Aktif:</strong>
+                    <span id="active-reports">0</span>
+                </p>
+
+                <p>
+                    <strong>Jumlah Laporan Membutuhkan Tindak Lanjut:</strong>
+                    <span id="follow-up-reports">0</span>
+                </p>
+            </div>
+
+            <p id="area-loading"
+               class="text-muted"
+               style="display: none;">
+                Mengambil informasi wilayah...
+            </p>
+
+            <p id="area-error"
+               style="display: none; color: var(--danger);">
+                Gagal mengambil informasi wilayah. Silakan coba kembali.
+            </p>
 
             <div class="form-section-heading coordinate-heading">
                 <h2>Lokasi Kejadian</h2>
@@ -142,6 +177,7 @@
 
             <div class="form-group">
                 <label for="condition_level">Tingkat Kondisi</label>
+
                 <select id="condition_level"
                         name="condition_level"
                         required>
@@ -196,6 +232,83 @@
                     Kirim Laporan
                 </button>
             </div>
+
         </form>
     </div>
+
 @endsection
+
+{{-- JAVASCRIPT FETCH INFORMASI WILAYAH --}}
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const areaSelect = document.getElementById('area_id');
+
+    const information = document.getElementById('area-information');
+    const areaName = document.getElementById('area-name');
+    const activeReports = document.getElementById('active-reports');
+    const followUpReports = document.getElementById('follow-up-reports');
+
+    const loading = document.getElementById('area-loading');
+    const error = document.getElementById('area-error');
+
+    const urlTemplate = @json(route('areas.information', ['area' => '__AREA__']));
+
+    areaSelect.addEventListener('change', async function () {
+
+        const areaId = this.value;
+
+        information.style.display = 'none';
+        error.style.display = 'none';
+
+        if (!areaId) {
+            loading.style.display = 'none';
+            return;
+        }
+
+        loading.style.display = 'block';
+
+        try {
+
+            const url = urlTemplate.replace('__AREA__', areaId);
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Gagal mengambil informasi wilayah.');
+            }
+
+            const data = await response.json();
+
+            areaName.textContent = data.area;
+            activeReports.textContent = data.active_reports;
+            followUpReports.textContent = data.follow_up_reports;
+
+            information.style.display = 'block';
+
+        } catch (err) {
+
+            console.error(err);
+            error.style.display = 'block';
+
+        } finally {
+
+            loading.style.display = 'none';
+
+        }
+    });
+
+    // Memuat informasi jika wilayah sudah terpilih sebelumnya.
+    if (areaSelect.value) {
+        areaSelect.dispatchEvent(new Event('change'));
+    }
+
+});
+</script>
+@endpush

@@ -138,33 +138,55 @@ class ReportController extends Controller
     }
 
     
-    public function data(Request $request)
+        public function data(Request $request)
+        {
+            $query = Report::with(['user', 'area'])->latest();
+
+            // Pelapor hanya dapat melihat laporan miliknya
+            if ($request->user()->role === 'pelapor') {
+                $query->where('user_id', $request->user()->id);
+            }
+
+            // Pencarian berdasarkan judul
+            if ($request->filled('search')) {
+                $query->where('title', 'like', '%' . $request->search . '%');
+            }
+
+            // Filter berdasarkan status
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            // Filter berdasarkan wilayah
+            if ($request->filled('area_id')) {
+                $query->where('area_id', $request->area_id);
+            }
+
+            $reports = $query->paginate(3);
+
+            return response()->json($reports);
+        }
+
+        public function areaInformation(Area $area)
     {
-        $query = Report::with(['user', 'area'])->latest();
+        $reports = $area->reports();
 
-        // Pelapor hanya dapat melihat laporan miliknya
-        if ($request->user()->role === 'pelapor') {
-            $query->where('user_id', $request->user()->id);
-        }
+        $activeReports = (clone $reports)
+            ->where('status', '!=', 'selesai')
+            ->count();
 
-        // Pencarian berdasarkan judul
-        if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
-        }
+        $followUpReports = (clone $reports)
+            ->whereIn('status', [
+                'perlu_tindak_lanjut',
+                'sedang_ditindaklanjuti'
+            ])
+            ->count();
 
-        // Filter berdasarkan status
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        // Filter berdasarkan wilayah
-        if ($request->filled('area_id')) {
-            $query->where('area_id', $request->area_id);
-        }
-
-        $reports = $query->paginate(3);
-
-        return response()->json($reports);
+        return response()->json([
+            'area' => $area->name,
+            'active_reports' => $activeReports,
+            'follow_up_reports' => $followUpReports,
+        ]);
     }
 
 
