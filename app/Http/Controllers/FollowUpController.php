@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Report;
 use Illuminate\Http\Request;
-use App\Models\ReportLog;
 use Illuminate\Support\Facades\DB;
 
 class FollowUpController extends Controller
@@ -90,18 +89,9 @@ class FollowUpController extends Controller
             // Ubah status hanya pada penerusan pertama
             if ($report->status === 'perlu_tindak_lanjut') {
 
-                $oldStatus = $report->status;
 
                 $report->update([
                     'status' => 'sedang_ditindaklanjuti',
-                ]);
-
-                ReportLog::create([
-                    'report_id' => $report->id,
-                    'user_id' => auth()->id(),
-                    'old_status' => $oldStatus,
-                    'new_status' => 'sedang_ditindaklanjuti',
-                    'changed_at' => now(),
                 ]);
             }
         });
@@ -119,19 +109,10 @@ class FollowUpController extends Controller
 
         DB::transaction(function () use ($report) {
 
-            $oldStatus = $report->status;
-
             $report->update([
                 'status' => 'selesai',
             ]);
 
-            ReportLog::create([
-                'report_id' => $report->id,
-                'user_id' => auth()->id(),
-                'old_status' => $oldStatus,
-                'new_status' => 'selesai',
-                'changed_at' => now(),
-            ]);
         });
 
         return redirect()

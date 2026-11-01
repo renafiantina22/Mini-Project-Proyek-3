@@ -136,4 +136,36 @@ class ReportController extends Controller
             ->route('reports.show', $report->id)
             ->with('success', 'Laporan berhasil diperbarui.');
     }
+
+    
+    public function data(Request $request)
+    {
+        $query = Report::with(['user', 'area'])->latest();
+
+        // Pelapor hanya dapat melihat laporan miliknya
+        if ($request->user()->role === 'pelapor') {
+            $query->where('user_id', $request->user()->id);
+        }
+
+        // Pencarian berdasarkan judul
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        // Filter berdasarkan status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter berdasarkan wilayah
+        if ($request->filled('area_id')) {
+            $query->where('area_id', $request->area_id);
+        }
+
+        $reports = $query->paginate(3);
+
+        return response()->json($reports);
+    }
+
+
 }

@@ -50,8 +50,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('reports', ReportController::class)
             ->only(['create', 'store', 'edit', 'update']);
     
-
     });
+
+    Route::get('/reports/data', [ReportController::class, 'data'])
+        ->name('reports.data');
 
      // Route khusus Koordinator
     Route::middleware('role:koordinator')->group(function () {
@@ -67,6 +69,7 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/follow-ups/{report}/complete', [FollowUpController::class, 'complete'])
             ->name('follow-ups.complete');
+
 
     });
 

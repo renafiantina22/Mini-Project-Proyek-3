@@ -1,47 +1,79 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail Laporan</title>
-</head>
-<body>
-    <h1>Detail Laporan Karhutla</h1>
+@extends('layouts.app')
 
-    <h2>{{ $report->title }}</h2>
+@section('title', 'Detail Laporan')
+@section('heading', 'Detail Laporan')
 
-    <p><strong>Deskripsi:</strong> {{ $report->description }}</p>
-    <p><strong>Wilayah:</strong> {{ $report->area->name }}</p>
-    <p><strong>Waktu:</strong> {{ $report->incident_time }}</p>
-    <p><strong>Latitude:</strong> {{ $report->latitude }}</p>
-    <p><strong>Longitude:</strong> {{ $report->longitude }}</p>
-    <p><strong>Tingkat Kondisi:</strong> {{ ucfirst($report->condition_level) }}</p>
-    <p><strong>Status:</strong> {{ $report->status }}</p>
+@section('content')
 
-    <a href="{{ route('reports.index') }}">Kembali ke Daftar Laporan</a>
+    @php
+        $statuses = [
+            'menunggu_peninjauan'    => ['Menunggu Peninjauan',    'status-waiting'],
+            'sedang_ditinjau'        => ['Sedang Ditinjau',        'status-review'],
+            'perlu_tindak_lanjut'    => ['Perlu Tindak Lanjut',    'status-follow-up'],
+            'sedang_ditindaklanjuti' => ['Sedang Ditindaklanjuti', 'status-progress'],
+            'selesai'                => ['Selesai',                'status-completed'],
+        ];
+        [$statusLabel, $statusClass] = $statuses[$report->status]
+            ?? [ucwords(str_replace('_', ' ', $report->status)), ''];
+        $isImage = $report->evidence_path
+            && preg_match('/\.(jpe?g|png|webp|gif)$/i', $report->evidence_path);
+    @endphp
 
-    @if (
-        auth()->user()->role === 'pelapor' &&
-        $report->user_id === auth()->id() &&
-        $report->status === 'menunggu_peninjauan'
-    )
-        <a href="{{ route('reports.edit', $report->id) }}">
-            Edit Laporan
-        </a>
-    @endif
+    <div class="page-header-row">
+        <div class="page-header">
+            <h1>Detail Laporan Karhutla</h1>
+            <p>Informasi lengkap laporan kejadian kebakaran hutan dan lahan.</p>
+        </div>
 
-    @if ($report->evidence_path)
-        <p><strong>Bukti Kejadian:</strong></p>
+        <div class="form-actions" style="margin-top:0">
+            <a href="{{ route('reports.index') }}" class="btn btn-secondary">← Kembali</a>
 
-        <a
-            href="{{ asset('storage/' . $report->evidence_path) }}"
-            target="_blank"
-        >
-            Lihat Bukti Kejadian
-        </a>
-    @else
-        <p><strong>Bukti Kejadian:</strong> Tidak ada bukti.</p>
-    @endif
+            @if (
+                auth()->user()->role === 'pelapor' &&
+                $report->user_id === auth()->id() &&
+                $report->status === 'menunggu_peninjauan'
+            )
+                <a href="{{ route('reports.edit', $report->id) }}" class="btn btn-primary">Edit Laporan</a>
+            @endif
+        </div>
+    </div>
 
-</body>
-</html>
+    <div class="card">
+        <div class="report-item-header">
+            <h3 style="font-size:18px">{{ $report->title }}</h3>
+            <span class="status-badge {{ $statusClass }}">{{ $statusLabel }}</span>
+        </div>
+
+        <p>{{ $report->description }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Informasi Kejadian</h3>
+
+        <p><strong>Wilayah:</strong> {{ $report->area->name }}</p>
+        <p><strong>Waktu Kejadian:</strong> {{ \Carbon\Carbon::parse($report->incident_time)->translatedFormat('d F Y, H:i') }}</p>
+        <p><strong>Tingkat Kondisi:</strong> {{ ucfirst($report->condition_level) }}</p>
+        <p><strong>Koordinat:</strong> {{ $report->latitude }}, {{ $report->longitude }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Bukti Kejadian</h3>
+
+        @if ($report->evidence_path)
+            @if ($isImage)
+                <p>
+                    <img src="{{ asset('storage/' . $report->evidence_path) }}"
+                         alt="Bukti kejadian"
+                         style="max-width:100%; max-height:360px; border-radius:8px; border:1px solid var(--border);">
+                </p>
+            @endif
+
+            <a href="{{ asset('storage/' . $report->evidence_path) }}" target="_blank" class="btn btn-secondary">
+                Lihat Bukti Kejadian
+            </a>
+        @else
+            <p class="text-muted">Tidak ada bukti yang diunggah.</p>
+        @endif
+    </div>
+
+@endsection

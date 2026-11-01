@@ -40,13 +40,6 @@ class ReviewController extends Controller
             'status' => 'sedang_ditinjau',
         ]);
 
-        // Mencatat perubahan status
-        $report->logs()->create([
-            'user_id' => auth()->id(),
-            'old_status' => $oldStatus,
-            'new_status' => 'sedang_ditinjau',
-            'changed_at' => now(),
-        ]);
 
         return redirect()
             ->route('reviews.show', $report->id)
@@ -109,14 +102,6 @@ class ReviewController extends Controller
         // Mengubah status laporan
         $report->update([
             'status' => $newStatus,
-        ]);
-
-        // Mencatat perubahan status
-        $report->logs()->create([
-            'user_id' => auth()->id(),
-            'old_status' => $oldStatus,
-            'new_status' => $newStatus,
-            'changed_at' => now(),
         ]);
 
         return redirect()

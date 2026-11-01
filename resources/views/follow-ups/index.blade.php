@@ -1,62 +1,69 @@
+@extends('layouts.app')
 
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Tindak Lanjut Karhutla</title>
-</head>
-<body>
-    <h1>Daftar Tindak Lanjut Laporan</h1>
+@section('title', 'Daftar Tindak Lanjut')
+@section('heading', 'Tindak Lanjut')
 
-    <p>
-        Berikut adalah laporan yang membutuhkan atau sedang menjalani
-        proses tindak lanjut.
-    </p>
+@section('content')
 
-    <a href="{{ route('dashboard') }}">Kembali ke Dashboard</a>
+    @php
+        $statuses = [
+            'menunggu_peninjauan'    => ['Menunggu Peninjauan',    'status-waiting'],
+            'sedang_ditinjau'        => ['Sedang Ditinjau',        'status-review'],
+            'perlu_tindak_lanjut'    => ['Perlu Tindak Lanjut',    'status-follow-up'],
+            'sedang_ditindaklanjuti' => ['Sedang Ditindaklanjuti', 'status-progress'],
+            'selesai'                => ['Selesai',                'status-completed'],
+        ];
+    @endphp
 
-    <hr>
+    <div class="page-header">
+        <h1>Daftar Tindak Lanjut Laporan</h1>
+        <p>Berikut adalah laporan yang membutuhkan atau sedang menjalani proses tindak lanjut.</p>
+    </div>
 
-    @forelse ($reports as $report)
-        <div>
-            <h3>{{ $report->title }}</h3>
-
-            <p>
-                <strong>Pelapor:</strong>
-                {{ $report->user->name }}
-            </p>
-
-            <p>
-                <strong>Wilayah:</strong>
-                {{ $report->area->name }}
-            </p>
-
-            <p>
-                <strong>Waktu Kejadian:</strong>
-                {{ $report->incident_time }}
-            </p>
-
-            <p>
-                <strong>Tingkat Kondisi:</strong>
-                {{ ucfirst($report->condition_level) }}
-            </p>
-
-            <p>
-                <strong>Status:</strong>
-                {{ ucwords(str_replace('_', ' ', $report->status)) }}
-            </p>
-
-            <a href="{{ route('follow-ups.show', $report->id) }}">
-                Lihat Detail Tindak Lanjut
-            </a>
+    @if (session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
         </div>
+    @endif
 
-        <hr>
-    @empty
-        <p>Belum ada laporan yang memerlukan tindak lanjut.</p>
-    @endforelse
+    <div class="report-list">
+        @forelse ($reports as $report)
+
+            @php
+                [$statusLabel, $statusClass] = $statuses[$report->status]
+                    ?? [ucwords(str_replace('_', ' ', $report->status)), ''];
+            @endphp
+
+            <article class="report-card">
+
+                <div class="report-item-header">
+                    <h3>{{ $report->title }}</h3>
+                    <span class="status-badge {{ $statusClass }}">{{ $statusLabel }}</span>
+                </div>
+
+                <div class="report-meta">
+                    <p>Dilaporkan oleh {{ $report->user->name }}</p>
+                    <p>Wilayah: {{ $report->area->name }}</p>
+                    <p>Waktu kejadian: {{ \Carbon\Carbon::parse($report->incident_time)->translatedFormat('d F Y') }}</p>
+                    <p>Tingkat kondisi: {{ ucfirst($report->condition_level) }}</p>
+                </div>
+
+                <div class="report-actions">
+                    <a href="{{ route('follow-ups.show', $report->id) }}" class="btn btn-secondary">
+                        Lihat Detail Tindak Lanjut
+                    </a>
+                </div>
+
+            </article>
+
+        @empty
+            <div class="card empty-state">
+                <h3>Belum Ada Laporan</h3>
+                <p>Belum ada laporan yang memerlukan tindak lanjut.</p>
+            </div>
+        @endforelse
+    </div>
 
     {{ $reports->links() }}
-</body>
-</html>
+
+@endsection

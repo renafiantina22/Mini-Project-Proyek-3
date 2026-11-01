@@ -1,159 +1,159 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Detail Tindak Lanjut</title>
-</head>
-<body>
+@extends('layouts.app')
 
-    {{-- Notifikasi keberhasilan --}}
+@section('title', 'Detail Tindak Lanjut')
+@section('heading', 'Tindak Lanjut')
+
+@section('content')
+
+    @php
+        $statuses = [
+            'menunggu_peninjauan'    => ['Menunggu Peninjauan',    'status-waiting'],
+            'sedang_ditinjau'        => ['Sedang Ditinjau',        'status-review'],
+            'perlu_tindak_lanjut'    => ['Perlu Tindak Lanjut',    'status-follow-up'],
+            'sedang_ditindaklanjuti' => ['Sedang Ditindaklanjuti', 'status-progress'],
+            'selesai'                => ['Selesai',                'status-completed'],
+        ];
+        [$statusLabel, $statusClass] = $statuses[$report->status]
+            ?? [ucwords(str_replace('_', ' ', $report->status)), ''];
+        $isImage = $report->evidence_path
+            && preg_match('/\.(jpe?g|png|webp|gif)$/i', $report->evidence_path);
+    @endphp
+
+    <div class="page-header-row">
+        <div class="page-header">
+            <h1>Detail Tindak Lanjut Laporan</h1>
+            <p>Teruskan laporan ke pihak terkait dan pantau prosesnya sampai selesai.</p>
+        </div>
+
+        <a href="{{ route('follow-ups.index') }}" class="btn btn-secondary">← Kembali</a>
+    </div>
+
     @if (session('success'))
-        <p style="color: green;">
-            {{ session('success') }}
-        </p>
+        <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-
-    <h1>Detail Tindak Lanjut Laporan</h1>
-
-    <a href="{{ route('follow-ups.index') }}">
-        Kembali ke Daftar Tindak Lanjut
-    </a>
-
-    <hr>
 
     {{-- INFORMASI LAPORAN --}}
-    <h2>Informasi Laporan</h2>
+    <div class="card">
+        <div class="report-item-header">
+            <h3 style="font-size:18px">{{ $report->title }}</h3>
+            <span class="status-badge {{ $statusClass }}">{{ $statusLabel }}</span>
+        </div>
 
-    <p><strong>Judul:</strong> {{ $report->title }}</p>
-    <p><strong>Pelapor:</strong> {{ $report->user->name }}</p>
-    <p><strong>Wilayah:</strong> {{ $report->area->name }}</p>
-    <p><strong>Deskripsi:</strong> {{ $report->description }}</p>
-    <p><strong>Waktu Kejadian:</strong> {{ $report->incident_time }}</p>
-    <p><strong>Latitude:</strong> {{ $report->latitude }}</p>
-    <p><strong>Longitude:</strong> {{ $report->longitude }}</p>
-    <p><strong>Tingkat Kondisi:</strong> {{ ucfirst($report->condition_level) }}</p>
-    <p><strong>Status:</strong> {{ ucwords(str_replace('_', ' ', $report->status)) }}</p>
+        <p>{{ $report->description }}</p>
+    </div>
 
-    @if ($report->evidence_path)
-        <p>
-            <strong>Bukti:</strong>
-            <a href="{{ asset('storage/' . $report->evidence_path) }}" target="_blank">
-                Lihat Bukti
+    <div class="card">
+        <h3>Informasi Kejadian</h3>
+
+        <p><strong>Pelapor:</strong> {{ $report->user->name }}</p>
+        <p><strong>Wilayah:</strong> {{ $report->area->name }}</p>
+        <p><strong>Waktu Kejadian:</strong> {{ \Carbon\Carbon::parse($report->incident_time)->translatedFormat('d F Y, H:i') }}</p>
+        <p><strong>Tingkat Kondisi:</strong> {{ ucfirst($report->condition_level) }}</p>
+        <p><strong>Koordinat:</strong> {{ $report->latitude }}, {{ $report->longitude }}</p>
+
+        @if ($report->evidence_path)
+            @if ($isImage)
+                <p>
+                    <img src="{{ asset('storage/' . $report->evidence_path) }}"
+                         alt="Bukti kejadian"
+                         style="max-width:100%; max-height:360px; border-radius:8px; border:1px solid var(--border);">
+                </p>
+            @endif
+
+            <a href="{{ asset('storage/' . $report->evidence_path) }}" target="_blank" class="btn btn-secondary">
+                Lihat Bukti Kejadian
             </a>
-        </p>
-    @endif
-
-    <hr>
+        @endif
+    </div>
 
     {{-- CATATAN PENINJAUAN RELAWAN --}}
-    <h2>Catatan Peninjauan Relawan</h2>
+    <div class="card">
+        <h3>Catatan Peninjauan Relawan</h3>
 
-    @forelse ($report->reviews as $review)
-        <div>
-            <p><strong>Relawan:</strong> {{ $review->reviewer->name }}</p>
-            <p><strong>Catatan:</strong> {{ $review->review_note }}</p>
-            <p><strong>Waktu:</strong> {{ $review->created_at }}</p>
+        <div class="report-list">
+            @forelse ($report->reviews as $review)
+                <div class="report-card">
+                    <div class="report-item-header">
+                        <h3>{{ $review->reviewer->name }}</h3>
+                        <span class="text-muted">{{ $review->created_at->translatedFormat('d F Y, H:i') }}</span>
+                    </div>
+                    <p>{{ $review->review_note }}</p>
+                </div>
+            @empty
+                <p class="text-muted">Belum ada catatan peninjauan.</p>
+            @endforelse
         </div>
-        <hr>
-    @empty
-        <p>Belum ada catatan peninjauan.</p>
-    @endforelse
+    </div>
 
     {{-- RIWAYAT TINDAK LANJUT --}}
-    <h2>Riwayat Tindak Lanjut</h2>
+    <div class="card">
+        <h3>Riwayat Tindak Lanjut</h3>
 
-    @forelse ($report->followUps as $followUp)
-        <div>
-            <p><strong>Koordinator:</strong> {{ $followUp->coordinator->name }}</p>
-            <p><strong>Tujuan Penerusan:</strong> {{ $followUp->destination }}</p>
-            <p><strong>Catatan:</strong> {{ $followUp->notes }}</p>
-            <p><strong>Waktu Penerusan:</strong> {{ $followUp->forwarded_at }}</p>
+        <div class="report-list">
+            @forelse ($report->followUps as $followUp)
+                <div class="report-card">
+                    <div class="report-item-header">
+                        <h3>{{ $followUp->destination }}</h3>
+                        <span class="text-muted">{{ \Carbon\Carbon::parse($followUp->forwarded_at)->translatedFormat('d F Y, H:i') }}</span>
+                    </div>
+                    <p>{{ $followUp->notes }}</p>
+                    <p class="text-muted">Diteruskan oleh {{ $followUp->coordinator->name }}</p>
+                </div>
+            @empty
+                <p class="text-muted">Belum ada riwayat tindak lanjut.</p>
+            @endforelse
         </div>
-        <hr>
-    @empty
-        <p>Belum ada riwayat tindak lanjut.</p>
-    @endforelse
+    </div>
 
     {{-- FORM PENYELESAIAN --}}
     @if ($report->status === 'sedang_ditindaklanjuti')
-        <hr>
+        <div class="card">
+            <h3>Selesaikan Tindak Lanjut</h3>
+            <p>Pastikan seluruh proses penerusan dan tindak lanjut sudah dilakukan sebelum menyelesaikan laporan.</p>
 
-        <h2>Selesaikan Tindak Lanjut</h2>
-
-        <p>
-            Pastikan seluruh proses penerusan dan tindak lanjut
-            sudah dilakukan sebelum menyelesaikan laporan.
-        </p>
-
-        <form action="{{ route('follow-ups.complete', $report->id) }}" method="POST">
-            @csrf
-
-            <button type="submit">
-                Tandai Sebagai Selesai
-            </button>
-        </form>
+            <form action="{{ route('follow-ups.complete', $report->id) }}" method="POST">
+                @csrf
+                <button type="submit" class="btn btn-primary">Tandai Sebagai Selesai</button>
+            </form>
+        </div>
     @endif
 
     {{-- FORM PENERUSAN --}}
-    @if (in_array($report->status, [
-        'perlu_tindak_lanjut',
-        'sedang_ditindaklanjuti'
-    ]))
+    @if (in_array($report->status, ['perlu_tindak_lanjut', 'sedang_ditindaklanjuti']))
+        <div class="card">
+            <h3>Teruskan Laporan</h3>
 
-        <hr>
+            <form action="{{ route('follow-ups.forward', $report->id) }}" method="POST">
+                @csrf
 
-        <h2>Teruskan Laporan</h2>
+                <div class="form-group">
+                    <label for="destination">Tujuan Penerusan</label>
+                    <select name="destination" id="destination" required>
+                        <option value="">-- Pilih Tujuan --</option>
+                        @foreach (['BPBD', 'Damkar', 'Pemerintah Desa', 'Pengelola Wilayah'] as $destination)
+                            <option value="{{ $destination }}" {{ old('destination') == $destination ? 'selected' : '' }}>
+                                {{ $destination }}
+                            </option>
+                        @endforeach
+                    </select>
 
-        <form action="{{ route('follow-ups.forward', $report->id) }}" method="POST">
-            @csrf
+                    @error('destination')
+                        <small style="color: var(--danger)">{{ $message }}</small>
+                    @enderror
+                </div>
 
-            <div>
-                <label for="destination">Tujuan Penerusan:</label>
+                <div class="form-group">
+                    <label for="notes">Catatan Penerusan</label>
+                    <textarea name="notes" id="notes" required>{{ old('notes') }}</textarea>
 
-                <select name="destination" id="destination" required>
-                    <option value="">-- Pilih Tujuan --</option>
+                    @error('notes')
+                        <small style="color: var(--danger)">{{ $message }}</small>
+                    @enderror
+                </div>
 
-                    <option value="BPBD" {{ old('destination') == 'BPBD' ? 'selected' : '' }}>
-                        BPBD
-                    </option>
-
-                    <option value="Damkar" {{ old('destination') == 'Damkar' ? 'selected' : '' }}>
-                        Damkar
-                    </option>
-
-                    <option value="Pemerintah Desa" {{ old('destination') == 'Pemerintah Desa' ? 'selected' : '' }}>
-                        Pemerintah Desa
-                    </option>
-
-                    <option value="Pengelola Wilayah" {{ old('destination') == 'Pengelola Wilayah' ? 'selected' : '' }}>
-                        Pengelola Wilayah
-                    </option>
-                </select>
-
-                @error('destination')
-                    <p style="color: red;">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <br>
-
-            <div>
-                <label for="notes">Catatan Penerusan:</label>
-
-                <textarea name="notes" id="notes" required>{{ old('notes') }}</textarea>
-
-                @error('notes')
-                    <p style="color: red;">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <br>
-
-            <button type="submit">
-                Teruskan Laporan
-            </button>
-        </form>
+                <button type="submit" class="btn btn-primary">Teruskan Laporan</button>
+            </form>
+        </div>
     @endif
 
-</body>
-</html>
+@endsection
